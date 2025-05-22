@@ -5,6 +5,7 @@
   "description": "基于Next.js和Ant Design 5构建的企业级系统原型",
   "scripts": {
     "dev": "next dev --turbopack",
+    "prebuild": "node fix-imports.js",
     "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint"
