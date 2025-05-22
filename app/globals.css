@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --primary-color: #0958d9;
+  --secondary-text: #434343;
 }
 
 @theme inline {
@@ -16,11 +20,42 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary-color: #1668dc;
+    --secondary-text: #a6a6a6;
   }
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), sans-serif;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 优化图像加载 */
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 减少布局偏移 */
+main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 提高可访问性 */
+:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }

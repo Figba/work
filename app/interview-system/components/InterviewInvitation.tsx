@@ -321,7 +321,7 @@ export default function InterviewInvitation() {
     <div>
       <Row gutter={[24, 24]}>
         <Col span={24}>
-          <Card title="Candidate Interview Invitations" bordered={false}>
+          <Card title="Candidate Interview Invitations" variant="borderless">
             <Table 
               dataSource={candidates} 
               rowKey="id"
@@ -382,7 +382,7 @@ export default function InterviewInvitation() {
               <div ref={setupCardRef}>
                 <Card 
                   title="Interview Invitation Setup" 
-                  bordered={false}
+                  variant="borderless"
                   extra={
                     <Button 
                       type="text" 
@@ -502,7 +502,7 @@ export default function InterviewInvitation() {
             </Col>
 
             <Col span={24}>
-              <Card bordered={false}>
+              <Card variant="borderless">
                 <Button 
                   type="primary" 
                   size="large" 
