@@ -1,29 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Card,
-  Typography,
-  Button,
-  Space,
-  Row,
-  Col,
-  Steps,
-  message,
-  Radio,
-  Tag,
-  Alert,
-} from 'antd';
-import {
-  CalendarOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  VideoCameraOutlined,
-  BankOutlined,
-} from '@ant-design/icons';
+import { Card, Typography, Button, Space, List, Radio, Alert } from 'antd';
+import { TimeSlot, InterviewType } from '../../types/interview';
 import dayjs from 'dayjs';
-import styles from './InterviewStyles.module.css';
-import { InterviewType, TimeSlot } from '../../types/interview';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -35,171 +15,111 @@ interface CandidateResponseProps {
   onConfirm: (selectedSlot: TimeSlot) => Promise<void>;
 }
 
-const CandidateResponse: React.FC<CandidateResponseProps> = ({
+export default function CandidateResponse({
   companyName,
   position,
   interviewType,
   timeSlots,
-  onConfirm,
-}) => {
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  onConfirm
+}: CandidateResponseProps) {
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
-  const handleTimeSlotSelect = (slot: TimeSlot) => {
-    setSelectedSlot(slot);
+  const handleSelectSlot = (slotKey: string) => {
+    setSelectedSlot(slotKey);
   };
 
   const handleConfirm = async () => {
-    if (!selectedSlot) {
-      message.error('Please select a time slot');
-      return;
-    }
-
+    if (!selectedSlot) return;
+    
     try {
       setLoading(true);
-      await onConfirm(selectedSlot);
-      setCurrentStep(1);
-      message.success('Interview time confirmed successfully');
-    } catch (error) {
-      message.error('Failed to confirm interview time');
+      const slot = timeSlots.find((_, index) => index.toString() === selectedSlot);
+      if (slot) {
+        await onConfirm(slot);
+        setConfirmed(true);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const renderEmailContent = () => (
-    <Card
-      className={styles.emailPreview}
-      title={
-        <Space>
-          <CalendarOutlined />
-          <Text strong>Interview Invitation</Text>
+  const groupedSlots = timeSlots.reduce((groups, slot) => {
+    const date = slot.date;
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(slot);
+    return groups;
+  }, {} as Record<string, TimeSlot[]>);
+
+  if (confirmed) {
+    return (
+      <Alert
+        message="Interview Time Confirmed"
+        description="Thank you for confirming your interview time. We look forward to speaking with you!"
+        type="success"
+        showIcon
+      />
+    );
+  }
+
+  return (
+    <Card>
+      <Title level={4}>Interview Invitation - {position}</Title>
+      <Paragraph>
+        {companyName} would like to schedule an interview with you for the {position} position.
+      </Paragraph>
+      
+      <Alert
+        message={interviewType === 'video' ? 'Video Interview' : 'On-site Interview'}
+        description={
+          interviewType === 'video'
+            ? 'This will be a video interview. You will receive a meeting link prior to the scheduled time.'
+            : 'This will be an in-person interview at our office location.'
+        }
+        type="info"
+        showIcon
+        style={{ marginBottom: '24px' }}
+      />
+      
+      <Title level={5}>Please select your preferred interview time:</Title>
+      
+      <Radio.Group 
+        onChange={(e) => handleSelectSlot(e.target.value)} 
+        value={selectedSlot}
+        style={{ width: '100%' }}
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          {Object.entries(groupedSlots).map(([date, slots]) => (
+            <Card key={date} size="small" title={dayjs(date).format('MMMM DD, YYYY (dddd)')} style={{ marginBottom: '8px' }}>
+              <List
+                size="small"
+                dataSource={slots}
+                renderItem={(slot, index) => (
+                  <List.Item>
+                    <Radio value={timeSlots.findIndex(s => s.date === slot.date && s.start === slot.start).toString()}>
+                      {slot.start} - {slot.end}
+                    </Radio>
+                  </List.Item>
+                )}
+              />
+            </Card>
+          ))}
         </Space>
-      }
-    >
-      <div className={styles.emailContent}>
-        <Paragraph>
-          <Text strong>Dear Candidate,</Text>
-        </Paragraph>
-        
-        <Paragraph>
-          Thank you for your interest in joining {companyName}. We would like to invite you to an interview for the {position} position.
-        </Paragraph>
-        
-        <Paragraph>
-          <Text strong>Interview Type: </Text>
-          {interviewType === 'video' ? (
-            <Tag icon={<VideoCameraOutlined />} color="blue">Video Interview</Tag>
-          ) : (
-            <Tag icon={<BankOutlined />} color="green">On-site Interview</Tag>
-          )}
-        </Paragraph>
-        
-        <Paragraph>
-          <Text strong>Please select one of the available time slots below that works best for you:</Text>
-        </Paragraph>
+      </Radio.Group>
+      
+      <div style={{ marginTop: '24px' }}>
+        <Button 
+          type="primary" 
+          onClick={handleConfirm}
+          disabled={!selectedSlot}
+          loading={loading}
+        >
+          Confirm Selected Time
+        </Button>
       </div>
     </Card>
   );
-
-  const renderTimeSlotSelection = () => (
-    <Card className={styles.interviewCardInner}>
-      <Radio.Group 
-        className={styles.timeSlotRadioGroup}
-        value={selectedSlot ? `${selectedSlot.date}-${selectedSlot.start}` : ''}
-      >
-        <Row gutter={[16, 16]}>
-          {timeSlots.map((slot, index) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={index}>
-              <div 
-                className={`${styles.timeSlotCard} ${selectedSlot && selectedSlot.date === slot.date && selectedSlot.start === slot.start ? styles.timeSlotCardSelected : ''}`}
-                onClick={() => handleTimeSlotSelect(slot)}
-              >
-                <Radio value={`${slot.date}-${slot.start}`} className={styles.slotRadio} />
-                <div className={styles.timeSlotDate}>
-                  {dayjs(slot.date).format('MMM DD (ddd)')}
-                </div>
-                <div className={styles.timeSlotTime}>
-                  <ClockCircleOutlined /> {slot.start} - {slot.end}
-                </div>
-              </div>
-            </Col>
-          ))}
-        </Row>
-      </Radio.Group>
-    </Card>
-  );
-
-  const renderConfirmation = () => (
-    <Card className={styles.interviewCardInner}>
-      <Alert
-        message="Interview Time Confirmed"
-        description={
-          <Space direction="vertical">
-            <Text>Thank you for confirming your interview time. We look forward to meeting you!</Text>
-            {selectedSlot && (
-              <div>
-                <Text strong>Your interview is scheduled for:</Text>
-                <div className={styles.confirmedTimeSlot}>
-                  <div className={styles.timeSlotDate}>
-                    {dayjs(selectedSlot.date).format('MMMM DD, YYYY (dddd)')}
-                  </div>
-                  <div className={styles.timeSlotTime}>
-                    <ClockCircleOutlined /> {selectedSlot.start} - {selectedSlot.end}
-                  </div>
-                </div>
-              </div>
-            )}
-          </Space>
-        }
-        type="success"
-        showIcon
-        icon={<CheckCircleOutlined />}
-      />
-    </Card>
-  );
-
-  return (
-    <Card className={styles.interviewCard}>
-      <Title level={4}>Interview Scheduling</Title>
-      
-      <Steps
-        current={currentStep}
-        items={[
-          {
-            title: 'Select Time',
-            icon: <CalendarOutlined />,
-          },
-          {
-            title: 'Confirmed',
-            icon: <CheckCircleOutlined />,
-          },
-        ]}
-        className={styles.stepsContainer}
-      />
-      
-      {currentStep === 0 ? (
-        <>
-          {renderEmailContent()}
-          {renderTimeSlotSelection()}
-          <div className={styles.submitButtonContainer}>
-            <Button
-              type="primary"
-              onClick={handleConfirm}
-              loading={loading}
-              disabled={!selectedSlot}
-              className={styles.confirmButton}
-            >
-              Confirm Interview Time
-            </Button>
-          </div>
-        </>
-      ) : (
-        renderConfirmation()
-      )}
-    </Card>
-  );
-};
-
-export default CandidateResponse; 
+}

@@ -1,24 +1,11 @@
-export enum InterviewType {
-  VIDEO = 'video',
-  IN_PERSON = 'inperson'
-}
+export type InterviewType = 'video' | 'onsite' | 'phone';
 
 export type Region = 'Shanghai' | 'Taipei' | 'Japan';
 
 export interface TimeSlot {
-  id: string;
-  time: string;
   date: string;
-  weekday: string;
-  available: boolean;
-}
-
-export interface Interviewer {
-  id: string;
-  name: string;
-  position: string;
-  department: string;
-  email: string;
+  start: string;
+  end: string;
 }
 
 export interface Candidate {
@@ -29,13 +16,20 @@ export interface Candidate {
   position: string;
 }
 
+export interface Interviewer {
+  id: string;
+  name: string;
+  email: string;
+  title: string;
+}
+
 export interface InterviewInvitation {
   id: string;
-  candidateName: string;
-  candidateEmail: string;
-  position: string;
-  interviewType: InterviewType;
-  timeSlot: TimeSlot | null;
-  status: 'draft' | 'sent' | 'scheduled' | 'completed' | 'cancelled';
+  candidate: Candidate;
   interviewers: Interviewer[];
-} 
+  type: InterviewType;
+  status: 'pending' | 'confirmed' | 'rejected' | 'completed';
+  createdAt: string;
+  expiresAt: string;
+  videoLink?: string;
+}

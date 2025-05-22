@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { Layout, Typography, Card, Tabs, ConfigProvider } from 'antd';
 import InterviewInvitation from './components/InterviewInvitation';
 import Interviewer from './components/Interviewer';
 import InterviewerDashboard from './components/InterviewerDashboard';
 // import SystemIntegration from './components/SystemIntegration';
 import { useSearchParams } from 'next/navigation';
-import Head from 'next/head';
 
 const { Content } = Layout;
 const { Title } = Typography;
 
-export default function InterviewSystem() {
+// 将使用useSearchParams的逻辑抽离成单独的组件
+function InterviewTabs() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('invitation');
   const [isLoading, setIsLoading] = useState(true);
@@ -64,69 +64,52 @@ export default function InterviewSystem() {
     }
   ];
 
-  // 生成JSON-LD结构化数据
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    'name': 'Interview System',
-    'applicationCategory': 'BusinessApplication',
-    'operatingSystem': 'Web',
-    'offers': {
-      '@type': 'Offer',
-      'price': '0',
-      'priceCurrency': 'USD'
-    },
-    'description': 'Manage and schedule interviews with candidates in an enterprise environment',
-    'softwareVersion': '1.0.0',
-    'author': {
-      '@type': 'Organization',
-      'name': 'Enterprise System Team'
-    }
-  };
-
   return (
     <>
-      <Head>
-        <title>Interview System | Enterprise System Prototype</title>
-        <meta name="description" content="Manage and schedule interviews with candidates" />
-        {/* JSON-LD 结构化数据 */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </Head>
-      <Layout className="min-h-screen">
-        <Content className="p-6">
-          <div style={{ minHeight: "64px" }}>
-            <Title level={2} aria-label="Interview System" className="mb-6">Interview System</Title>
-          </div>
-          {isLoading ? (
-            <div style={{ minHeight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="loading-placeholder" aria-hidden="true">&nbsp;</div>
-            </div>
-          ) : (
-            <ConfigProvider
-              theme={{
-                components: {
-                  Tabs: {
-                    inkBarColor: 'var(--primary-color)',
-                    itemSelectedColor: 'var(--primary-color)',
-                    itemHoverColor: 'var(--primary-color)',
-                  }
-                }
-              }}
-            >
-              <Tabs 
-                activeKey={activeTab} 
-                onChange={setActiveTab} 
-                items={tabItems}
-                className="interview-system-tabs"
-                style={{ minHeight }}
-              />
-            </ConfigProvider>
-          )}
-        </Content>
-      </Layout>
+      {isLoading ? (
+        <div style={{ minHeight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="loading-placeholder" aria-hidden="true">&nbsp;</div>
+        </div>
+      ) : (
+        <ConfigProvider
+          theme={{
+            components: {
+              Tabs: {
+                inkBarColor: 'var(--primary-color)',
+                itemSelectedColor: 'var(--primary-color)',
+                itemHoverColor: 'var(--primary-color)',
+              }
+            }
+          }}
+        >
+          <Tabs 
+            activeKey={activeTab} 
+            onChange={setActiveTab} 
+            items={tabItems}
+            className="interview-system-tabs"
+            style={{ minHeight }}
+          />
+        </ConfigProvider>
+      )}
     </>
+  );
+}
+
+export default function InterviewSystem() {
+  return (
+    <Layout className="min-h-screen">
+      <Content className="p-6">
+        <div style={{ minHeight: "64px" }}>
+          <Title level={2} aria-label="Interview System" className="mb-6">Interview System</Title>
+        </div>
+        <Suspense fallback={
+          <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="loading-placeholder" aria-hidden="true">Loading...</div>
+          </div>
+        }>
+          <InterviewTabs />
+        </Suspense>
+      </Content>
+    </Layout>
   );
 } 

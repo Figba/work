@@ -135,4 +135,4 @@ export const interviewService = {
   sendDingTalkNotification,
   sendInterviewEmail,
   sendRejectionEmail,
-}; 
+};

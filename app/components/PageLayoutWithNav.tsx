@@ -1,26 +1,24 @@
 'use client';
 
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { Layout } from 'antd';
 import AppNavigation from './AppNavigation';
 
 const { Content } = Layout;
 
 interface PageLayoutWithNavProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-const PageLayoutWithNav: React.FC<PageLayoutWithNavProps> = ({ children }) => {
+export default function PageLayoutWithNav({ children }: PageLayoutWithNavProps) {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <AppNavigation />
-      <Layout style={{ marginLeft: 200 }}>
-        <Content style={{ padding: '24px', margin: '24px' }}>
+      <Layout>
+        <Content style={{ padding: '24px', background: '#fff' }}>
           {children}
         </Content>
       </Layout>
     </Layout>
   );
-};
-
-export default PageLayoutWithNav; 
+}
