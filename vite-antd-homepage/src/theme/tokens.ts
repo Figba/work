@@ -10,6 +10,8 @@ export const figmaTokens = {
   colorSuccess: '#389E0D',
   colorError: '#D80027',
   borderRadius: 8,
+  fontSize: 12,
+  controlHeight: 32,
   fontFamily:
     "'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
 };

@@ -15,42 +15,232 @@ body,
 body {
   min-width: 320px;
   background: #f3f3f3;
-}
-
-.brand-box {
-  height: 56px;
-  margin: 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid #e9eaeb;
-}
-
-.brand-title {
-  font-weight: 600;
   color: #111928;
 }
 
-.top-header {
-  height: 56px;
+.figma-layout {
+  min-height: 100vh;
+}
+
+.figma-logo-row {
+  height: 57.6px;
   padding: 0 16px;
-  background: #ffffff;
   border-bottom: 1px solid #e9eaeb;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
 }
 
-.page-header-row {
+.figma-logo-mark {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+}
+
+.figma-logo-mark span {
+  display: block;
+  border-radius: 2px;
+  background: #1677ff;
+}
+
+.figma-logo-mark span:nth-child(3) {
+  grid-column: 1 / span 2;
+}
+
+.brand-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111928;
+}
+
+.figma-side-menu {
+  border-inline-end: 0 !important;
+  margin-top: 16px;
+}
+
+.figma-side-menu .ant-menu-item {
+  height: 38px;
+  line-height: 38px;
+  margin: 12px 12px 0 !important;
+  border-radius: 8px;
+}
+
+.figma-sidebar-footer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 12px;
+  border-top: 1px solid #e9eaeb;
+  background: #fff;
+}
+
+.figma-user-card {
+  min-height: 28px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+}
+
+.figma-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.figma-topbar {
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e9eaeb;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 20px;
+}
+
+.figma-topbar-btn {
+  height: 32px;
+  border-color: #dfe1ea;
+  color: #111928;
+}
+
+.figma-topbar-input {
+  min-width: 200px;
+}
+
+.figma-ai-badge {
+  margin-left: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #1677ff;
+  color: #fff;
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.figma-content {
+  padding: 24px 20px 0;
+  background: #f3f3f3;
+}
+
+.figma-overview-card,
+.figma-table-panel {
+  width: 100%;
+  border: 1px solid #e9eaeb;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.figma-overview-title-row {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  margin-bottom: 12px;
+}
+
+.figma-overview-scroll {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.figma-balance-item {
+  min-height: 116px;
+}
+
+.figma-filter-grid-row-1 {
+  display: grid;
+  grid-template-columns: 160px 160px 220px 160px 160px 160px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.figma-filter-grid-row-1 .ant-form-item,
+.figma-filter-grid-row-2 .ant-form-item {
+  margin-bottom: 8px;
+}
+
+.figma-filter-grid-row-2 {
+  display: grid;
+  grid-template-columns: 246px 160px 1fr;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+
+.figma-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.figma-table .ant-table-thead > tr > th {
+  height: 44px;
+  font-weight: 600;
+  color: #111928;
+  background: #fafafa;
+}
+
+.figma-table .ant-table-tbody > tr > td {
+  height: 48px;
+  color: #111928;
+}
+
+.figma-bottom-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1360px) {
+  .figma-filter-grid-row-1 {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+  }
+
+  .figma-filter-grid-row-2 {
+    grid-template-columns: 1fr 220px;
+  }
+
+  .figma-filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
-  .page-header-row {
+  .figma-content {
+    padding: 12px;
+  }
+
+  .figma-overview-title-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .figma-filter-grid-row-1,
+  .figma-filter-grid-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .figma-filter-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .figma-bottom-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }

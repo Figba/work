@@ -115,7 +115,22 @@ vite-antd-homepage/
 
 ---
 
-## 7) 下一步建议（你最可能会用到）
+## 7) Cloud Agent 环境说明（已配置）
+
+仓库根目录已新增：
+
+- `/.cursor/environment.json`
+- `/.cursor/Dockerfile`
+
+作用是：
+
+1. 统一使用 Node 22（满足 Node 18+ 要求）  
+2. agent 启动时自动执行：`cd vite-antd-homepage && npm ci`  
+3. 直接可运行 `npm run dev` / `npm run build`
+
+---
+
+## 8) 下一步建议（你最可能会用到）
 
 - 把 `transactionApi.ts` 改成你们后端地址（我可以继续帮你改）
 - 加登录态/权限（例如不同角色看到不同菜单）

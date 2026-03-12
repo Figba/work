@@ -1,37 +1,15 @@
 import {
-  BellOutlined,
-  DownloadOutlined,
+  BankOutlined,
+  BarChartOutlined,
+  DownOutlined,
   EditOutlined,
-  HomeOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
+  FileTextOutlined,
+  FilterOutlined,
   PlusOutlined,
   SearchOutlined,
-  SettingOutlined,
-  TableOutlined,
-  UserOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
-import {
-  Avatar,
-  Badge,
-  Breadcrumb,
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  InputNumber,
-  Layout,
-  Menu,
-  message,
-  Row,
-  Select,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import { Avatar, Button, Card, DatePicker, Form, Input, InputNumber, Layout, Menu, message, Select, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -63,6 +41,12 @@ interface FilterFormValues {
 const DEFAULT_QUERY: TransactionQuery = {
   page: 1,
   pageSize: 10,
+  currency: 'ALL',
+  direction: 'ALL',
+  transferType: 'ALL',
+};
+
+const DEFAULT_FILTER_VALUES: Pick<FilterFormValues, 'currency' | 'direction' | 'transferType'> = {
   currency: 'ALL',
   direction: 'ALL',
   transferType: 'ALL',
@@ -107,6 +91,11 @@ function App() {
   }, [messageApi]);
 
   useEffect(() => {
+    // 初始化筛选项默认值，避免初次加载出现空状态
+    filterForm.setFieldsValue(DEFAULT_FILTER_VALUES);
+  }, [filterForm]);
+
+  useEffect(() => {
     void loadTableData();
   }, [loadTableData]);
 
@@ -116,6 +105,15 @@ function App() {
 
   const handleSearch = async (): Promise<void> => {
     const values = await filterForm.validateFields();
+    if (
+      typeof values.amountMin === 'number' &&
+      typeof values.amountMax === 'number' &&
+      values.amountMin > values.amountMax
+    ) {
+      messageApi.warning('Amount Min 不能大于 Amount Max');
+      return;
+    }
+
     setQuery((prev) => ({
       ...DEFAULT_QUERY,
       page: 1,
@@ -136,6 +134,7 @@ function App() {
 
   const handleReset = (): void => {
     filterForm.resetFields();
+    filterForm.setFieldsValue(DEFAULT_FILTER_VALUES);
     setQuery((prev) => ({
       ...DEFAULT_QUERY,
       page: 1,
@@ -148,15 +147,15 @@ function App() {
     setModalOpen(true);
   };
 
-  const handleUploadCsv = (): void => {
+  const handleUploadCsv = useCallback((): void => {
     // TODO: 替换成真实上传接口，例如 POST /api/transactions/upload-csv
     messageApi.info('这里预留给真实 CSV 上传接口');
-  };
+  }, [messageApi]);
 
-  const handleEditColumns = (): void => {
+  const handleEditColumns = useCallback((): void => {
     // TODO: 这里可接入“列配置弹窗”或用户偏好存储接口
     messageApi.info('这里预留给列配置功能');
-  };
+  }, [messageApi]);
 
   const handleEdit = useCallback((row: TransactionItem): void => {
     setEditingRow(row);
@@ -185,8 +184,9 @@ function App() {
 
   const columns: ColumnsType<TransactionItem> = useMemo(
     () => [
-      { title: '编号', dataIndex: 'id', width: 90, fixed: 'left' },
-      { title: 'Bank Name', dataIndex: 'bankName', width: 240 },
+      // 列宽按 Figma 表头比例设置，便于后续继续做像素级微调
+      { title: '编号', dataIndex: 'id', width: 120, fixed: 'left' },
+      { title: 'Bank Name', dataIndex: 'bankName', width: 200 },
       { title: 'Transaction Date', dataIndex: 'transactionDate', width: 160 },
       {
         title: 'Currency',
@@ -207,12 +207,12 @@ function App() {
       },
       { title: 'Transfer Type', dataIndex: 'transferType', width: 140 },
       { title: 'Counterparty', dataIndex: 'counterparty', width: 160 },
-      { title: 'Memo', dataIndex: 'memo', ellipsis: true, width: 280 },
+      { title: 'Memo', dataIndex: 'memo', ellipsis: true, width: 304 },
       {
         title: '操作',
         key: 'action',
         fixed: 'right',
-        width: 120,
+        width: 96,
         render: (_, row) => (
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(row)}>
             编辑
@@ -224,72 +224,79 @@ function App() {
   );
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className="figma-layout">
       {contextHolder}
 
       <Sider
         breakpoint="lg"
         collapsedWidth={64}
-        width={176}
+        width={160}
         collapsed={collapsed}
         onCollapse={setCollapsed}
         style={{ background: '#FFFFFF', borderRight: '1px solid #E9EAEB' }}
       >
-        <div className="brand-box">
-          <HomeOutlined style={{ color: '#1677FF', fontSize: 18 }} />
+        <div className="figma-logo-row">
+          <div className="figma-logo-mark">
+            <span />
+            <span />
+            <span />
+          </div>
           {!collapsed ? <span className="brand-title">F System</span> : null}
         </div>
 
         <Menu
           mode="inline"
           defaultSelectedKeys={['bank-details']}
+          className="figma-side-menu"
           items={[
-            { key: 'bank-details', icon: <TableOutlined />, label: 'Bank Details' },
-            { key: 'reports', icon: <HomeOutlined />, label: 'Reports' },
-            { key: 'settings', icon: <SettingOutlined />, label: 'Settings' },
+            { key: 'bank-details', icon: <BankOutlined />, label: 'Bank Details' },
+            { key: 'je', icon: <FileTextOutlined />, label: 'JE' },
+            { key: 'reports', icon: <BarChartOutlined />, label: 'Reports' },
           ]}
         />
+
+        <div className="figma-sidebar-footer">
+          <div className="figma-user-card">
+            <Avatar size={28}>A</Avatar>
+            {!collapsed ? (
+              <div className="figma-user-meta">
+                <Typography.Text strong style={{ fontSize: 12 }}>
+                  Admin
+                </Typography.Text>
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  li.yi@ctw.inc
+                </Typography.Text>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </Sider>
 
       <Layout>
-        {/* 顶部导航栏（Navbar） */}
-        <Header className="top-header">
-          <Space>
-            <Button
-              type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed((prev) => !prev)}
-            />
-            <Typography.Text strong>Dashboard</Typography.Text>
-          </Space>
-          <Space size={16}>
-            <Badge count={3}>
-              <BellOutlined style={{ fontSize: 18 }} />
-            </Badge>
-            <Avatar icon={<UserOutlined />} />
+        {/* 顶部 CTA 区（对应 Figma 的 56px 高导航带） */}
+        <Header className="figma-topbar">
+          <Space size={12}>
+            <Button className="figma-topbar-btn">
+              万円 <DownOutlined />
+            </Button>
+            <Button className="figma-topbar-btn figma-topbar-input">
+              Pending Input... <DownOutlined />
+              <span className="figma-ai-badge">AI</span>
+            </Button>
           </Space>
         </Header>
 
-        <Content style={{ padding: 16, background: '#F3F3F3' }}>
-          <Breadcrumb
-            items={[
-              { title: 'Home' },
-              { title: 'Bank Details' },
-            ]}
-            style={{ marginBottom: 12 }}
-          />
-
-          {/* 页面头（Page Header） */}
-          <Card style={{ marginBottom: 12 }}>
-            <div className="page-header-row">
+        <Content className="figma-content">
+          <Card className="figma-overview-card">
+            <div className="figma-overview-title-row">
               <div>
-                <Typography.Title level={4} style={{ margin: 0 }}>
+                <Typography.Title level={4} style={{ margin: 0, fontSize: 24 }}>
                   Bank Details
                 </Typography.Title>
                 <Typography.Text type="secondary">（{total}）</Typography.Text>
               </div>
-              <Space wrap>
-                <Button icon={<DownloadOutlined />} onClick={handleUploadCsv}>
+              <Space>
+                <Button icon={<UploadOutlined />} onClick={handleUploadCsv}>
                   Upload CSV
                 </Button>
                 <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
@@ -297,102 +304,88 @@ function App() {
                 </Button>
               </Space>
             </div>
-          </Card>
 
-          <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-            {overviewCards.map((item) => (
-              <Col key={item.key} xs={24} sm={12} lg={6}>
-                <Card size="small">
+            <div className="figma-overview-scroll">
+              {overviewCards.map((item) => (
+                <Card key={item.key} size="small" className="figma-balance-item">
                   <Typography.Text type="secondary">{item.label}</Typography.Text>
                   <Typography.Title level={5} style={{ margin: '8px 0 0' }}>
                     ¥{item.amount.toLocaleString()}
                   </Typography.Title>
                 </Card>
-              </Col>
-            ))}
-          </Row>
-
-          <Card style={{ marginBottom: 12 }}>
-            {/* 搜索/筛选区：提交后会触发服务端分页模拟 */}
-            <Form form={filterForm} layout="vertical">
-              <Row gutter={[12, 0]}>
-                <Col xs={24} md={12} lg={8}>
-                  <Form.Item label="关键词" name="keyword">
-                    <Input placeholder="Memo / Description / Counterparty" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12} lg={4}>
-                  <Form.Item label="Bank" name="bankName">
-                    <Select allowClear placeholder="All Banks" options={BANK_OPTIONS.map((item) => ({ value: item, label: item }))} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12} lg={4}>
-                  <Form.Item label="Currency" name="currency">
-                    <Select
-                      placeholder="All Currency"
-                      options={[
-                        { value: 'ALL', label: 'All Currency' },
-                        ...CURRENCY_OPTIONS.map((item) => ({ value: item, label: item })),
-                      ]}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12} lg={4}>
-                  <Form.Item label="Direction" name="direction">
-                    <Select
-                      placeholder="Direction"
-                      options={[
-                        { value: 'ALL', label: 'All' },
-                        { value: 'IN', label: 'IN' },
-                        { value: 'OUT', label: 'OUT' },
-                      ]}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12} lg={4}>
-                  <Form.Item label="Transfer Type" name="transferType">
-                    <Select
-                      placeholder="Transaction Type"
-                      options={[
-                        { value: 'ALL', label: 'All Type' },
-                        ...TRANSFER_TYPE_OPTIONS.map((item) => ({ value: item, label: item })),
-                      ]}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12} lg={8}>
-                  <Form.Item label="Transaction Date" name="dateRange">
-                    <DatePicker.RangePicker style={{ width: '100%' }} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12} lg={4}>
-                  <Form.Item label="Amount Min" name="amountMin">
-                    <InputNumber style={{ width: '100%' }} min={0} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12} lg={4}>
-                  <Form.Item label="Amount Max" name="amountMax">
-                    <InputNumber style={{ width: '100%' }} min={0} />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Space wrap>
-                <Button type="primary" icon={<SearchOutlined />} onClick={() => void handleSearch()}>
-                  Filter
-                </Button>
-                <Button onClick={handleReset}>Reset</Button>
-                <Button onClick={handleEditColumns}>Edit columns</Button>
-              </Space>
-            </Form>
+              ))}
+            </div>
           </Card>
 
-          <Card>
+          <Card className="figma-table-panel">
+            {/* 搜索/筛选区：提交后会触发服务端分页模拟 */}
+            <Form form={filterForm} layout="vertical">
+              <div className="figma-filter-grid-row-1">
+                <Form.Item label="Bank" name="bankName">
+                  <Select allowClear placeholder="All Banks" options={BANK_OPTIONS.map((item) => ({ value: item, label: item }))} />
+                </Form.Item>
+                <Form.Item label="Currency" name="currency">
+                  <Select
+                    placeholder="All Currency"
+                    options={[
+                      { value: 'ALL', label: 'All Currency' },
+                      ...CURRENCY_OPTIONS.map((item) => ({ value: item, label: item })),
+                    ]}
+                  />
+                </Form.Item>
+                <Form.Item label="Transaction Date" name="dateRange">
+                  <DatePicker.RangePicker style={{ width: '100%' }} />
+                </Form.Item>
+                <Form.Item label="Amount Min" name="amountMin">
+                  <InputNumber style={{ width: '100%' }} min={0} placeholder="Amount Min" />
+                </Form.Item>
+                <Form.Item label="Amount Max" name="amountMax">
+                  <InputNumber style={{ width: '100%' }} min={0} placeholder="Amount Max" />
+                </Form.Item>
+                <Form.Item label="Transfer Type" name="transferType">
+                  <Select
+                    placeholder="Transaction Type"
+                    options={[
+                      { value: 'ALL', label: 'All Type' },
+                      ...TRANSFER_TYPE_OPTIONS.map((item) => ({ value: item, label: item })),
+                    ]}
+                  />
+                </Form.Item>
+              </div>
+
+              <div className="figma-filter-grid-row-2">
+                <Form.Item label="关键词" name="keyword">
+                  <Input prefix={<SearchOutlined />} placeholder="Memo / Description / Counterparty" />
+                </Form.Item>
+                <Form.Item label="Direction" name="direction">
+                  <Select
+                    placeholder="Direction"
+                    options={[
+                      { value: 'ALL', label: 'All' },
+                      { value: 'IN', label: 'IN' },
+                      { value: 'OUT', label: 'OUT' },
+                    ]}
+                  />
+                </Form.Item>
+                <div className="figma-filter-actions">
+                  <Button type="primary" icon={<FilterOutlined />} onClick={() => void handleSearch()}>
+                    Filter
+                  </Button>
+                  <Button onClick={handleReset}>Reset</Button>
+                  <Button icon={<EditOutlined />} onClick={handleEditColumns}>
+                    Edit columns
+                  </Button>
+                </div>
+              </div>
+            </Form>
+
             <Table<TransactionItem>
               rowKey="id"
               columns={columns}
               dataSource={list}
               loading={tableLoading}
-              scroll={{ x: 1400 }}
+              className="figma-table"
+              scroll={{ x: 1600 }}
               pagination={{
                 current: query.page,
                 pageSize: query.pageSize,
@@ -408,6 +401,16 @@ function App() {
                 }));
               }}
             />
+
+            <div className="figma-bottom-actions">
+              <Button type="primary" icon={<SearchOutlined />} onClick={() => void handleSearch()}>
+                Refresh
+              </Button>
+              <Button onClick={handleCreate} icon={<PlusOutlined />}>
+                Add
+              </Button>
+              <Button onClick={handleReset}>Reset Filter</Button>
+            </div>
           </Card>
         </Content>
       </Layout>

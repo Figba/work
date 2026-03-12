@@ -23,6 +23,8 @@ createRoot(document.getElementById('root')!).render(
           colorSuccess: figmaTokens.colorSuccess,
           colorError: figmaTokens.colorError,
           borderRadius: figmaTokens.borderRadius,
+          fontSize: figmaTokens.fontSize,
+          controlHeight: figmaTokens.controlHeight,
           fontFamily: figmaTokens.fontFamily,
         },
       }}
