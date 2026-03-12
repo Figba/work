@@ -41,5 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # cursor
-/.cursor/
+/.cursor/*
+!/.cursor/environment.json
+!/.cursor/Dockerfile
 /cursorrule/

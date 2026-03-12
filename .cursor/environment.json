@@ -1,0 +1,17 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "install": "node -v && npm -v && cd vite-antd-homepage && npm ci",
+  "terminals": [
+    {
+      "name": "Vite Homepage Dev",
+      "command": "cd vite-antd-homepage && npm run dev"
+    },
+    {
+      "name": "Vite Homepage Build",
+      "command": "cd vite-antd-homepage && npm run build"
+    }
+  ]
+}
