@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import type {
   CurrencyCode,
   OverviewItem,
@@ -21,172 +20,75 @@ export const BANK_OPTIONS = [
 export const CURRENCY_OPTIONS: CurrencyCode[] = ['JPY', 'USD', 'SGD', 'CNY'];
 export const TRANSFER_TYPE_OPTIONS: TransferType[] = ['Wire', 'Card', 'Internal'];
 
-const MEMOS = [
-  '游戏收入',
-  '内部账户转账',
-  '购买软件服务',
-  '团队聚餐费用',
-  '顾问服务费',
-  '营销活动支出',
-];
-
-const COUNTERPARTIES = ['Company A', 'Company B', 'Company C', 'Vendor X', 'Partner Y'];
-
-// 模拟数据库（前端内存版）
-let mockDatabase: TransactionItem[] = Array.from({ length: 83 }).map((_, index) => {
-  const bankName = BANK_OPTIONS[index % BANK_OPTIONS.length];
-  const currency = CURRENCY_OPTIONS[index % CURRENCY_OPTIONS.length];
-  const transferType = TRANSFER_TYPE_OPTIONS[index % TRANSFER_TYPE_OPTIONS.length];
-  const counterparty = COUNTERPARTIES[index % COUNTERPARTIES.length];
-  const memo = MEMOS[index % MEMOS.length];
-  const signed = index % 4 === 0 ? -1 : 1;
-  const amount = signed * (1000 + ((index * 1735) % 98000));
-
-  return {
-    id: index + 1,
-    bankName,
-    transactionDate: dayjs().subtract(index, 'day').format('YYYY-MM-DD'),
-    currency,
-    amount,
-    transferType,
-    memo,
-    counterparty,
-  };
-});
-
-mockDatabase = mockDatabase.sort((a, b) => dayjs(b.transactionDate).valueOf() - dayjs(a.transactionDate).valueOf());
-
 const wait = async (ms: number): Promise<void> => {
   await new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 };
 
-// 这里是“服务端分页模拟”：
-// TODO: 替换为真实 API，例如 GET /api/transactions?page=1&pageSize=10...
+const API_BASE = '/api';
+
+// 统一请求函数：把网络错误和 JSON 解析都收敛在这里
+const requestJson = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...init,
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`API ${response.status}: ${message}`);
+  }
+
+  return (await response.json()) as T;
+};
+
+// 这里是“服务端分页模拟（HTTP 版）”
+// TODO: 替换为真实后端地址，例如 https://api.xxx.com/transactions
 export const fetchTransactions = async (query: TransactionQuery): Promise<TransactionListResponse> => {
-  await wait(450);
-
-  const keyword = query.keyword?.trim().toLowerCase();
-  let filtered = [...mockDatabase];
-
-  if (keyword) {
-    filtered = filtered.filter((item) => {
-      const fullText = `${item.bankName} ${item.memo} ${item.counterparty}`.toLowerCase();
-      return fullText.includes(keyword);
-    });
+  await wait(120);
+  const params = new URLSearchParams();
+  params.set('page', String(query.page));
+  params.set('pageSize', String(query.pageSize));
+  if (query.keyword) params.set('keyword', query.keyword);
+  if (query.bankName) params.set('bankName', query.bankName);
+  if (query.currency) params.set('currency', query.currency);
+  if (query.direction) params.set('direction', query.direction);
+  if (query.transferType) params.set('transferType', query.transferType);
+  if (typeof query.amountMin === 'number') params.set('amountMin', String(query.amountMin));
+  if (typeof query.amountMax === 'number') params.set('amountMax', String(query.amountMax));
+  if (query.dateRange?.[0] && query.dateRange?.[1]) {
+    params.set('dateStart', query.dateRange[0]);
+    params.set('dateEnd', query.dateRange[1]);
   }
 
-  if (query.bankName) {
-    filtered = filtered.filter((item) => item.bankName === query.bankName);
-  }
-
-  if (query.currency && query.currency !== 'ALL') {
-    filtered = filtered.filter((item) => item.currency === query.currency);
-  }
-
-  if (query.transferType && query.transferType !== 'ALL') {
-    filtered = filtered.filter((item) => item.transferType === query.transferType);
-  }
-
-  if (query.direction && query.direction !== 'ALL') {
-    filtered = filtered.filter((item) => (query.direction === 'IN' ? item.amount > 0 : item.amount < 0));
-  }
-
-  if (typeof query.amountMin === 'number') {
-    const min = query.amountMin;
-    filtered = filtered.filter((item) => Math.abs(item.amount) >= min);
-  }
-
-  if (typeof query.amountMax === 'number') {
-    const max = query.amountMax;
-    filtered = filtered.filter((item) => Math.abs(item.amount) <= max);
-  }
-
-  if (query.dateRange && query.dateRange[0] && query.dateRange[1]) {
-    const [start, end] = query.dateRange;
-    filtered = filtered.filter((item) => {
-      const current = dayjs(item.transactionDate);
-      return !current.isBefore(dayjs(start), 'day') && !current.isAfter(dayjs(end), 'day');
-    });
-  }
-
-  const total = filtered.length;
-  const startIndex = (query.page - 1) * query.pageSize;
-  const data = filtered.slice(startIndex, startIndex + query.pageSize);
-
-  return { data, total };
+  return requestJson<TransactionListResponse>(`/transactions?${params.toString()}`);
 };
 
-// TODO: 替换为真实 API，例如 POST /api/transactions
+// TODO: 替换为真实 API，例如 POST https://api.xxx.com/transactions
 export const createTransaction = async (payload: UpsertTransactionInput): Promise<TransactionItem> => {
-  await wait(300);
-  const signedAmount = payload.direction === 'IN' ? Math.abs(payload.amount) : -Math.abs(payload.amount);
-  const nextId = mockDatabase.length === 0 ? 1 : Math.max(...mockDatabase.map((item) => item.id)) + 1;
-
-  const createdItem: TransactionItem = {
-    id: nextId,
-    bankName: payload.bankName,
-    transactionDate: payload.transactionDate,
-    currency: payload.currency,
-    amount: signedAmount,
-    transferType: payload.transferType,
-    memo: payload.memo,
-    counterparty: payload.counterparty,
-  };
-
-  mockDatabase = [createdItem, ...mockDatabase];
-  return createdItem;
+  await wait(80);
+  return requestJson<TransactionItem>('/transactions', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 };
 
-// TODO: 替换为真实 API，例如 PUT /api/transactions/:id
+// TODO: 替换为真实 API，例如 PUT https://api.xxx.com/transactions/:id
 export const updateTransaction = async (
   id: number,
   payload: UpsertTransactionInput,
 ): Promise<TransactionItem> => {
-  await wait(300);
-  const signedAmount = payload.direction === 'IN' ? Math.abs(payload.amount) : -Math.abs(payload.amount);
-
-  let updatedItem: TransactionItem | null = null;
-  mockDatabase = mockDatabase.map((item) => {
-    if (item.id !== id) {
-      return item;
-    }
-
-    const nextItem: TransactionItem = {
-      ...item,
-      bankName: payload.bankName,
-      transactionDate: payload.transactionDate,
-      currency: payload.currency,
-      amount: signedAmount,
-      transferType: payload.transferType,
-      memo: payload.memo,
-      counterparty: payload.counterparty,
-    };
-    updatedItem = nextItem;
-    return nextItem;
+  await wait(80);
+  return requestJson<TransactionItem>(`/transactions/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
   });
-
-  if (!updatedItem) {
-    throw new Error(`Transaction ${id} not found`);
-  }
-
-  return updatedItem;
 };
 
-// 顶部卡片数据（模拟接口）
-// TODO: 替换为真实 API，例如 GET /api/dashboard/overview
+// 顶部卡片数据（HTTP 版模拟接口）
+// TODO: 替换为真实 API，例如 GET https://api.xxx.com/dashboard/overview
 export const fetchOverview = async (): Promise<OverviewItem[]> => {
-  await wait(250);
-
-  const sumByBank = BANK_OPTIONS.map((bank) => {
-    const amount = mockDatabase
-      .filter((item) => item.bankName === bank)
-      .reduce((sum, item) => sum + item.amount, 0);
-    return { key: bank, label: bank, amount };
-  });
-
-  const totalAmount = mockDatabase.reduce((sum, item) => sum + item.amount, 0);
-
-  return [{ key: 'all', label: '所有余额', amount: totalAmount }, ...sumByBank.slice(0, 4)];
+  await wait(80);
+  return requestJson<OverviewItem[]>('/overview');
 };
